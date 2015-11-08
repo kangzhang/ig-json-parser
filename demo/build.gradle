@@ -5,6 +5,7 @@ buildscript {
 
   dependencies {
     classpath group: 'com.android.tools.build', name: 'gradle', version: '1.1.0'
+    classpath group: 'com.neenbedankt.gradle.plugins', name: 'android-apt', version: '1.8'
   }
 }
 
