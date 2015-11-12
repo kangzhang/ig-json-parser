@@ -3,9 +3,11 @@
 package com.instagram.common.json.annotation.processor;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.List;
 
+import com.instagram.common.json.JsonReader;
 import com.instagram.common.json.annotation.processor.support.ExtensibleJSONWriter;
 import com.instagram.common.json.annotation.processor.uut.SimpleParseUUT;
 import com.instagram.common.json.annotation.processor.uut.SimpleParseUUT__JsonHelper;
@@ -50,9 +52,8 @@ public class MalformedJsonTest {
         .endObject();
 
     String inputString = stringWriter.toString();
-    JsonParser jp = new JsonFactory().createParser(inputString);
-    jp.nextToken();
-    SimpleParseUUT uut = SimpleParseUUT__JsonHelper.parseFromJson(jp);
+    JsonReader reader = new JsonReader(new StringReader(inputString));
+    SimpleParseUUT uut = SimpleParseUUT__JsonHelper.parseFromJson(reader);
 
     assertSame(intValue, uut.intField);
     assertSame(integerValue, uut.integerField.intValue());
@@ -74,9 +75,8 @@ public class MalformedJsonTest {
         .endObject();
 
     String inputString = stringWriter.toString();
-    JsonParser jp = new JsonFactory().createParser(inputString);
-    jp.nextToken();
-    SimpleParseUUT uut = SimpleParseUUT__JsonHelper.parseFromJson(jp);
+    JsonReader reader = new JsonReader(new StringReader(inputString));
+    SimpleParseUUT uut = SimpleParseUUT__JsonHelper.parseFromJson(reader);
 
     assertSame(intValue, uut.intField);
     assertSame(integerValue, uut.integerField.intValue());
@@ -105,9 +105,8 @@ public class MalformedJsonTest {
         .endObject();
 
     String inputString = stringWriter.toString();
-    JsonParser jp = new JsonFactory().createParser(inputString);
-    jp.nextToken();
-    SimpleParseUUT uut = SimpleParseUUT__JsonHelper.parseFromJson(jp);
+    JsonReader reader = new JsonReader(new StringReader(inputString));
+    SimpleParseUUT uut = SimpleParseUUT__JsonHelper.parseFromJson(reader);
 
     assertSame(intValue, uut.intField);
     assertSame(integerValue, uut.integerField.intValue());
@@ -147,9 +146,8 @@ public class MalformedJsonTest {
         .endObject();
 
     String inputString = stringWriter.toString();
-    JsonParser jp = new JsonFactory().createParser(inputString);
-    jp.nextToken();
-    SimpleParseUUT uut = SimpleParseUUT__JsonHelper.parseFromJson(jp);
+    JsonReader reader = new JsonReader(new StringReader(inputString));
+    SimpleParseUUT uut = SimpleParseUUT__JsonHelper.parseFromJson(reader);
 
     assertSame(intValue, uut.intField);
     assertSame(integerValue, uut.integerField.intValue());

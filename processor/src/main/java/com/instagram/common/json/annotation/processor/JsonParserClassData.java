@@ -6,6 +6,7 @@ import javax.annotation.processing.Messager;
 import javax.lang.model.element.Modifier;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -21,6 +22,8 @@ import java.util.Set;
 import com.instagram.common.json.JsonAnnotationProcessorConstants;
 import com.instagram.common.json.JsonFactoryHolder;
 import com.instagram.common.json.JsonHelper;
+import com.instagram.common.json.JsonReader;
+import com.instagram.common.json.JsonToken;
 import com.instagram.common.json.annotation.JsonField;
 import com.instagram.common.json.annotation.JsonType;
 import com.instagram.common.json.annotation.util.Console;
@@ -30,7 +33,6 @@ import com.instagram.javawriter.JavaWriter;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
 
 import static javax.lang.model.element.Modifier.*;
 
@@ -85,9 +87,10 @@ public class JsonParserClassData extends ProcessorClassData<String, TypeData> {
           Map.class,
           Queue.class,
           Set.class,
-          JsonGenerator.class,
-          JsonParser.class,
+          StringReader.class,
+          JsonReader.class,
           JsonToken.class,
+          JsonGenerator.class,
           JsonFactoryHolder.class,
           JsonHelper.class);
 
@@ -131,24 +134,24 @@ public class JsonParserClassData extends ProcessorClassData<String, TypeData> {
                 mSimpleClassName,
                 "parseFromJson",
                 EnumSet.of(getParseMethodVisibility(), STATIC),
-                Arrays.asList("JsonParser", "jp"),
+                Arrays.asList("JsonReader", "reader"),
                 Arrays.asList("IOException"))
             .emitStatement("%s instance = new %s()", mSimpleClassName, mSimpleClassName)
             .emitEmptyLine()
             .emitSingleLineComment("validate that we're on the right token")
-            .beginControlFlow("if (jp.getCurrentToken() != JsonToken.START_OBJECT)")
-            .emitStatement("jp.skipChildren()")
+            .beginControlFlow("if (reader.peek() != JsonToken.BEGIN_OBJECT)")
+            .emitStatement("reader.skipChildren()")
             .emitStatement("return null")
             .endControlFlow()
             .emitEmptyLine()
-            .beginControlFlow("while (jp.nextToken() != JsonToken.END_OBJECT)")
-            .emitStatement("String fieldName = jp.getCurrentName()")
-            .emitStatement("jp.nextToken()")
-            .emitStatement("processSingleField(instance, fieldName, jp)")
+            .beginControlFlow("while (reader.nextToken() != JsonToken.END_OBJECT)")
+            .emitStatement("String fieldName = reader.getName()")
+            .emitStatement("reader.nextToken()")
+            .emitStatement("processSingleField(instance, fieldName, reader)")
                 // always skip children.  if we expected an array or an object, we would have
-                // consumed the START_ARRAY or START_OBJECT.  therefore, we would only skip
+                // consumed the BEGIN_ARRAY or BEGIN_OBJECT.  therefore, we would only skip
                 // forward if we're seeing something unexpected.
-            .emitStatement("jp.skipChildren()")
+            .emitStatement("reader.skipChildren()")
             .endControlFlow()
             .emitEmptyLine()
             .emitStatement("return %s", returnValue)
@@ -161,7 +164,7 @@ public class JsonParserClassData extends ProcessorClassData<String, TypeData> {
               "boolean",
               "processSingleField",
               EnumSet.of(getParseMethodVisibility(), STATIC),
-              Arrays.asList(mSimpleClassName, "instance", "String", "fieldName", "JsonParser", "jp"),
+              Arrays.asList(mSimpleClassName, "instance", "String", "fieldName", "JsonReader", "reader"),
               Arrays.asList("IOException"))
           .emitWithGenerator(
               new JavaWriter.JavaGenerator() {
@@ -172,7 +175,7 @@ public class JsonParserClassData extends ProcessorClassData<String, TypeData> {
                   // if we reached here, we need to call the superclasses processSingleField
                   // method.
                   if (mParentInjectedClassName != null) {
-                    writer.emitStatement("return %s.processSingleField(instance, fieldName, jp)",
+                    writer.emitStatement("return %s.processSingleField(instance, fieldName, reader)",
                         mParentInjectedClassName);
                   } else {
                     writer.emitStatement("return false");
@@ -191,9 +194,9 @@ public class JsonParserClassData extends ProcessorClassData<String, TypeData> {
                 Arrays.asList("String", "inputString"),
                 Arrays.asList("IOException"))
             .emitStatement(
-                "JsonParser jp = JsonFactoryHolder.APP_FACTORY.createParser(inputString)")
-            .emitStatement("jp.nextToken()")
-            .emitStatement("return parseFromJson(jp)")
+                "JsonReader reader = new JsonReader(new StringReader(inputString))")
+//            .emitStatement("reader.nextToken()")
+            .emitStatement("return parseFromJson(reader)")
             .endMethod()
             .emitEmptyLine();
       }
@@ -339,9 +342,9 @@ public class JsonParserClassData extends ProcessorClassData<String, TypeData> {
     String concreteType = mapCollectionTypeToConcreteType(data.getCollectionType());
 
     writer.emitStatement("%s<%s> results = null", interfaceType, innerType)
-        .beginControlFlow("if (jp.getCurrentToken() == JsonToken.START_ARRAY)")
+        .beginControlFlow("if (reader.peek() == JsonToken.BEGIN_ARRAY)")
         .emitStatement("results = new %s<%s>()", concreteType, innerType)
-        .beginControlFlow("while (jp.nextToken() != JsonToken.END_ARRAY)")
+        .beginControlFlow("while (reader.nextToken() != JsonToken.END_ARRAY)")
         .emitStatement("%s parsed = %s", innerType, generateExtractRvalue(data))
         .beginControlFlow("if (parsed != null)")
         .emitStatement("results.add(parsed)")
@@ -362,12 +365,11 @@ public class JsonParserClassData extends ProcessorClassData<String, TypeData> {
     String concreteType = mapCollectionTypeToConcreteType(valueTypeData.getCollectionType());
 
     writer.emitStatement("%s<%s, %s> results = null", interfaceType, keyType, valueType)
-        .beginControlFlow("if (jp.getCurrentToken() == JsonToken.START_OBJECT)")
+        .beginControlFlow("if (reader.peek() == JsonToken.BEGIN_OBJECT)")
         .emitStatement("results = new %s<%s, %s>()", concreteType, keyType, valueType)
-        .beginControlFlow("while (jp.nextToken() != JsonToken.END_OBJECT)")
-        .emitStatement("%s parsedKey = jp.getText()", keyType)
-        .emitStatement("jp.nextToken()")
-        .beginControlFlow("if (jp.getCurrentToken() == JsonToken.VALUE_NULL)")
+        .beginControlFlow("while (reader.nextToken() != JsonToken.END_OBJECT)")
+        .emitStatement("%s parsedKey = reader.getName()", keyType)
+        .beginControlFlow("if (reader.nextToken() == JsonToken.NULL)")
         .emitStatement("results.put(parsedKey, null)")
         .nextControlFlow("else")
         .emitStatement(
@@ -398,7 +400,7 @@ public class JsonParserClassData extends ProcessorClassData<String, TypeData> {
     }
 
     return StrFormat.createStringFormatter(valueExtractFormatter)
-        .addParam("parser_object", "jp")
+        .addParam("parser_object", "reader")
         .addParam("subobject_class", data.getParsableType())
         .addParam(
             "subobject_helper_class",
@@ -440,48 +442,45 @@ public class JsonParserClassData extends ProcessorClassData<String, TypeData> {
   static {
     sExactFormatters.put(TypeUtils.ParseType.BOOLEAN, "${parser_object}.getBooleanValue()");
     sExactFormatters.put(TypeUtils.ParseType.BOOLEAN_OBJECT,
-        "((${parser_object}.getCurrentToken() == JsonToken.VALUE_TRUE || " +
-            "${parser_object}.getCurrentToken() == JsonToken.VALUE_FALSE) ? " +
-            "Boolean.valueOf(${parser_object}.getValueAsBoolean()) : null)");
+        "(${parser_object}.peek() == JsonToken.BOOLEAN ? " +
+            "Boolean.valueOf(${parser_object}.getBooleanValue()) : null)");
     sExactFormatters.put(TypeUtils.ParseType.INTEGER, "${parser_object}.getIntValue()");
     sExactFormatters.put(TypeUtils.ParseType.INTEGER_OBJECT,
-        "(${parser_object}.getCurrentToken() == JsonToken.VALUE_NUMBER_INT ? " +
-            "Integer.valueOf(${parser_object}.getValueAsInt()) : null)");
+        "(${parser_object}.peek() == JsonToken.NUMBER ? " +
+            "Integer.valueOf(${parser_object}.getIntValue()) : null)");
     sExactFormatters.put(TypeUtils.ParseType.LONG, "${parser_object}.getLongValue()");
     sExactFormatters.put(TypeUtils.ParseType.LONG_OBJECT,
-        "(${parser_object}.getCurrentToken() == JsonToken.VALUE_NUMBER_INT ? " +
-            "Long.valueOf(${parser_object}.getValueAsLong()) : null)");
-    sExactFormatters.put(TypeUtils.ParseType.FLOAT, "${parser_object}.getFloatValue()");
+        "(${parser_object}.peek() == JsonToken.NUMBER ? " +
+            "Long.valueOf(${parser_object}.getLongValue()) : null)");
+    sExactFormatters.put(TypeUtils.ParseType.FLOAT, "(float) ${parser_object}.getDoubleValue()");
     sExactFormatters.put(TypeUtils.ParseType.FLOAT_OBJECT,
-        "((${parser_object}.getCurrentToken() == JsonToken.VALUE_NUMBER_FLOAT || " +
-            "${parser_object}.getCurrentToken() == JsonToken.VALUE_NUMBER_INT) ? " +
-            "new Float(${parser_object}.getValueAsDouble()) : null)");
+        "(${parser_object}.peek() == JsonToken.NUMBER ? " +
+            "new Float(${parser_object}.getDoubleValue()) : null)");
     sExactFormatters.put(TypeUtils.ParseType.DOUBLE, "${parser_object}.getDoubleValue()");
     sExactFormatters.put(TypeUtils.ParseType.DOUBLE_OBJECT,
-        "((${parser_object}.getCurrentToken() == JsonToken.VALUE_NUMBER_FLOAT || " +
-            "${parser_object}.getCurrentToken() == JsonToken.VALUE_NUMBER_INT) ? " +
-            "Double.valueOf(${parser_object}.getValueAsDouble()) : null)");
+        "(${parser_object}.peek() == JsonToken.NUMBER ? " +
+            "Double.valueOf(${parser_object}.getDoubleValue()) : null)");
     sExactFormatters.put(TypeUtils.ParseType.STRING,
-        "(${parser_object}.getCurrentToken() == JsonToken.VALUE_STRING ? ${parser_object}.getText() : null)");
+        "(${parser_object}.peek() == JsonToken.STRING ? ${parser_object}.getText() : null)");
 
-    sCoercedFormatters.put(TypeUtils.ParseType.BOOLEAN, "${parser_object}.getValueAsBoolean()");
+    sCoercedFormatters.put(TypeUtils.ParseType.BOOLEAN, "${parser_object}.getBooleanValue()");
     sCoercedFormatters.put(
-        TypeUtils.ParseType.BOOLEAN_OBJECT, "Boolean.valueOf(${parser_object}.getValueAsBoolean())");
-    sCoercedFormatters.put(TypeUtils.ParseType.INTEGER, "${parser_object}.getValueAsInt()");
+        TypeUtils.ParseType.BOOLEAN_OBJECT, "Boolean.valueOf(${parser_object}.getBooleanValue())");
+    sCoercedFormatters.put(TypeUtils.ParseType.INTEGER, "${parser_object}.getIntValue()");
     sCoercedFormatters.put(TypeUtils.ParseType.INTEGER_OBJECT,
-        "Integer.valueOf(${parser_object}.getValueAsInt())");
-    sCoercedFormatters.put(TypeUtils.ParseType.LONG, "${parser_object}.getValueAsLong()");
+        "Integer.valueOf(${parser_object}.getIntValue())");
+    sCoercedFormatters.put(TypeUtils.ParseType.LONG, "${parser_object}.getLongValue()");
     sCoercedFormatters.put(TypeUtils.ParseType.LONG_OBJECT,
-        "Long.valueOf(${parser_object}.getValueAsLong())");
+        "Long.valueOf(${parser_object}.getLongValue())");
     sCoercedFormatters.put(TypeUtils.ParseType.FLOAT,
-        "((float) ${parser_object}.getValueAsDouble())");
+        "((float) ${parser_object}.getDoubleValue())");
     sCoercedFormatters.put(TypeUtils.ParseType.FLOAT_OBJECT,
-        "new Float(${parser_object}.getValueAsDouble())");
-    sCoercedFormatters.put(TypeUtils.ParseType.DOUBLE, "${parser_object}.getValueAsDouble()");
+        "new Float(${parser_object}.getDoubleValue())");
+    sCoercedFormatters.put(TypeUtils.ParseType.DOUBLE, "${parser_object}.getDoubleValue()");
     sCoercedFormatters.put(
-        TypeUtils.ParseType.DOUBLE_OBJECT, "Double.valueOf(${parser_object}.getValueAsDouble())");
+        TypeUtils.ParseType.DOUBLE_OBJECT, "Double.valueOf(${parser_object}.getDoubleValue())");
     sCoercedFormatters.put(TypeUtils.ParseType.STRING,
-        "(${parser_object}.getCurrentToken() == JsonToken.VALUE_NULL ? null : ${parser_object}.getText())");
+        "(${parser_object}.peek() == JsonToken.NULL ? null : ${parser_object}.getText())");
 
     sJavaTypes.put(TypeUtils.ParseType.BOOLEAN_OBJECT, "Boolean");
     sJavaTypes.put(TypeUtils.ParseType.INTEGER_OBJECT, "Integer");

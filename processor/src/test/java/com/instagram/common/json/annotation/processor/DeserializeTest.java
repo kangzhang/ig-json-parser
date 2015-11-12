@@ -3,6 +3,7 @@
 package com.instagram.common.json.annotation.processor;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,6 +14,8 @@ import java.util.Queue;
 import java.util.Set;
 
 import com.instagram.common.json.JsonHelper;
+import com.instagram.common.json.JsonReader;
+import com.instagram.common.json.JsonReaderException;
 import com.instagram.common.json.annotation.processor.support.ExtensibleJSONWriter;
 import com.instagram.common.json.annotation.processor.uut.AlternateFieldUUT;
 import com.instagram.common.json.annotation.processor.uut.AlternateFieldUUT__JsonHelper;
@@ -142,9 +145,8 @@ public class DeserializeTest {
         .endObject();
 
     String inputString = stringWriter.toString();
-    JsonParser jp = new JsonFactory().createParser(inputString);
-    jp.nextToken();
-    SimpleParseUUT uut = SimpleParseUUT__JsonHelper.parseFromJson(jp);
+    JsonReader reader = new JsonReader(new StringReader(inputString));
+    SimpleParseUUT uut = SimpleParseUUT__JsonHelper.parseFromJson(reader);
 
     assertTrue(new SimpleParseUUT__JsonHelper() instanceof JsonHelper);
     assertSame(intValue, uut.intField);
@@ -176,9 +178,8 @@ public class DeserializeTest {
         .endObject();
 
     String inputString = stringWriter.toString();
-    JsonParser jp = new JsonFactory().createParser(inputString);
-    jp.nextToken();
-    FormatterUUT uut = FormatterUUT__JsonHelper.parseFromJson(jp);
+    JsonReader reader = new JsonReader(new StringReader(inputString));
+    FormatterUUT uut = FormatterUUT__JsonHelper.parseFromJson(reader);
 
     assertSame(deserializedValue, uut.getValueFormatter());
   }
@@ -196,9 +197,8 @@ public class DeserializeTest {
         .endObject();
 
     String inputString = stringWriter.toString();
-    JsonParser jp = new JsonFactory().createParser(inputString);
-    jp.nextToken();
-    FormatterUUT uut = FormatterUUT__JsonHelper.parseFromJson(jp);
+    JsonReader reader = new JsonReader(new StringReader(inputString));
+    FormatterUUT uut = FormatterUUT__JsonHelper.parseFromJson(reader);
 
     assertSame(deserializedValue, uut.getFieldAssignmentFormatter());
   }
@@ -215,9 +215,8 @@ public class DeserializeTest {
         .endObject();
 
     String inputString = stringWriter.toString();
-    JsonParser jp = new JsonFactory().createParser(inputString);
-    jp.nextToken();
-    EnumUUT uut = EnumUUT__JsonHelper.parseFromJson(jp);
+    JsonReader reader = new JsonReader(new StringReader(inputString));
+    EnumUUT uut = EnumUUT__JsonHelper.parseFromJson(reader);
 
     assertSame(value, uut.enumField);
   }
@@ -234,7 +233,7 @@ public class DeserializeTest {
             }
           });
       fail("primitive type exact mismatches should throw exception");
-    } catch (JsonParseException ex) {
+    } catch (JsonReaderException ex) {
       // this is expected.
     }
 
@@ -258,7 +257,7 @@ public class DeserializeTest {
             }
           });
       fail("primitive type exact mismatches should throw exception");
-    } catch (JsonParseException ex) {
+    } catch (JsonReaderException ex) {
       // this is expected.
     }
 
@@ -282,7 +281,7 @@ public class DeserializeTest {
             }
           });
       fail("primitive type exact mismatches should throw exception");
-    } catch (JsonParseException ex) {
+    } catch (JsonReaderException ex) {
       // this is expected.
     }
 
@@ -306,7 +305,7 @@ public class DeserializeTest {
             }
           });
       fail("primitive type exact mismatches should throw exception");
-    } catch (JsonParseException ex) {
+    } catch (JsonReaderException ex) {
       // this is expected.
     }
 
@@ -330,7 +329,7 @@ public class DeserializeTest {
             }
           });
       fail("primitive type exact mismatches should throw exception");
-    } catch (JsonParseException ex) {
+    } catch (JsonReaderException ex) {
       // this is expected.
     }
 
@@ -383,9 +382,8 @@ public class DeserializeTest {
         .endObject();
 
     String inputString = stringWriter.toString();
-    JsonParser jp = new JsonFactory().createParser(inputString);
-    jp.nextToken();
-    PostprocessingUUT uut = PostprocessingUUT__JsonHelper.parseFromJson(jp);
+    JsonReader reader = new JsonReader(new StringReader(inputString));
+    PostprocessingUUT uut = PostprocessingUUT__JsonHelper.parseFromJson(reader);
 
     assertSame(value + 1, uut.getValue());
   }
@@ -417,9 +415,8 @@ public class DeserializeTest {
         .endObject();
 
     String inputString = stringWriter.toString();
-    JsonParser jp = new JsonFactory().createParser(inputString);
-    jp.nextToken();
-    StrictListParseUUT uut = StrictListParseUUT__JsonHelper.parseFromJson(jp);
+    JsonReader reader = new JsonReader(new StringReader(inputString));
+    StrictListParseUUT uut = StrictListParseUUT__JsonHelper.parseFromJson(reader);
 
     assertEquals(3, uut.integerListField.size());
     assertEquals(1, uut.integerListField.get(0).intValue());
@@ -444,9 +441,8 @@ public class DeserializeTest {
         .endObject();
 
     String inputString = stringWriter.toString();
-    JsonParser jp = new JsonFactory().createParser(inputString);
-    jp.nextToken();
-    AlternateFieldUUT uut = AlternateFieldUUT__JsonHelper.parseFromJson(jp);
+    JsonReader reader = new JsonReader(new StringReader(inputString));
+    AlternateFieldUUT uut = AlternateFieldUUT__JsonHelper.parseFromJson(reader);
 
     assertEquals(value, uut.getNameField());
   }
@@ -462,9 +458,8 @@ public class DeserializeTest {
         .endObject();
 
     String inputString = stringWriter.toString();
-    JsonParser jp = new JsonFactory().createParser(inputString);
-    jp.nextToken();
-    SimpleParseUUT uut = SimpleParseUUT__JsonHelper.parseFromJson(jp);
+    JsonReader reader = new JsonReader(new StringReader(inputString));
+    SimpleParseUUT uut = SimpleParseUUT__JsonHelper.parseFromJson(reader);
 
     assertNull(uut.stringField);
   }
@@ -484,9 +479,8 @@ public class DeserializeTest {
         .endObject();
 
     String inputString = stringWriter.toString();
-    JsonParser jp = new JsonFactory().createParser(inputString);
-    jp.nextToken();
-    CustomParseContainerUUT uut = CustomParseContainerUUT__JsonHelper.parseFromJson(jp);
+    JsonReader reader = new JsonReader(new StringReader(inputString));
+    CustomParseContainerUUT uut = CustomParseContainerUUT__JsonHelper.parseFromJson(reader);
 
     assertEquals(value, uut.getCustomParseUUT().getStringField());
   }
@@ -632,9 +626,8 @@ public class DeserializeTest {
         .endObject();
 
     String inputString = stringWriter.toString();
-    JsonParser jp = new JsonFactory().createParser(inputString);
-    jp.nextToken();
-    MapUUT uut = MapUUT__JsonHelper.parseFromJson(jp);
+    JsonReader reader = new JsonReader(new StringReader(inputString));
+    MapUUT uut = MapUUT__JsonHelper.parseFromJson(reader);
 
     assertEquals(stringIntegerMap, uut.stringIntegerMapField);
     assertEquals(stringStringMap, uut.stringStringMapField);
@@ -662,9 +655,8 @@ public class DeserializeTest {
         .endObject();
 
     String inputString = stringWriter.toString();
-    JsonParser jp = new JsonFactory().createParser(inputString);
-    jp.nextToken();
-    MapUUT uut = MapUUT__JsonHelper.parseFromJson(jp);
+    JsonReader reader = new JsonReader(new StringReader(inputString));
+    MapUUT uut = MapUUT__JsonHelper.parseFromJson(reader);
 
     assertTrue(uut.stringStringMapField.containsKey(keyWithNullValue));
     assertNull(uut.stringStringMapField.get(keyWithNullValue));

@@ -3,6 +3,7 @@
 package com.instagram.common.json.annotation.processor;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,6 +12,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 
+import com.instagram.common.json.JsonReader;
 import com.instagram.common.json.annotation.processor.uut.GetterUUT;
 import com.instagram.common.json.annotation.processor.uut.GetterUUT__JsonHelper;
 import com.instagram.common.json.annotation.processor.uut.EnumUUT;
@@ -88,9 +90,8 @@ public class SerializeTest {
     jsonGenerator.close();
 
     String inputString = stringWriter.toString();
-    JsonParser jp = new JsonFactory().createParser(inputString);
-    jp.nextToken();
-    SimpleParseUUT parsed = SimpleParseUUT__JsonHelper.parseFromJson(jp);
+    JsonReader reader = new JsonReader(new StringReader(inputString));
+    SimpleParseUUT parsed = SimpleParseUUT__JsonHelper.parseFromJson(reader);
 
     assertSame(source.intField, parsed.intField);
     assertEquals(source.integerField, parsed.integerField);
