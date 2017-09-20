@@ -2,8 +2,8 @@ apply plugin: 'com.android.library'
 apply plugin: 'com.neenbedankt.android-apt'
 
 dependencies {
-  apt project(':processor')
-  compile project(':common')
+  apt 'com.github.kangzhang.ig-json-parser:processor:use_jitpack-SNAPSHOT'
+  compile 'com.github.kangzhang.ig-json-parser:runtime:use_jitpack-SNAPSHOT'
 }
 
 android {
